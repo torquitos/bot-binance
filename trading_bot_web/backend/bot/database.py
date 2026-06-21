@@ -191,7 +191,8 @@ class Database:
         pass  # connections are short-lived via 'with self._conn()'
 
     def run_backtest(self, symbol, interval, klines, quote_amount,
-                     evaluate_fn, emergency_stop_pct=5.0):
+                     evaluate_fn, emergency_stop_pct=5.0,
+                     compound=False):
         results = {
             "symbol": symbol,
             "interval": interval,
@@ -255,9 +256,10 @@ class Database:
                 signal = evaluate_fn(closes_up_to, highs_up_to, lows_up_to, False)
                 if signal and signal.get("action") == "buy":
                     price = closes_up_to[-1]
-                    position_qty = float(quote_amount) / price
+                    invest = equity if compound else float(quote_amount)
+                    position_qty = invest / price
                     position_entry = price
-                    position_spent = float(quote_amount)
+                    position_spent = invest
                     position_open = True
                     results["trades"].append({
                         "time": candle["open_time"],

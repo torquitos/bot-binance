@@ -165,6 +165,14 @@ def api_auto_stop():
         return fail(str(exc))
 
 
+@app.get("/api/logs")
+def api_logs_get():
+    try:
+        return ok({"logs": service.state.get("logs", [])})
+    except Exception as exc:
+        return fail(str(exc))
+
+
 @app.post("/api/logs/clear")
 @require_api_key
 def api_logs_clear():
@@ -221,6 +229,8 @@ def api_backtest():
         if "stop_loss_price" not in strategy_params and payload.get("stop_loss"):
             strategy_params["stop_loss_price"] = float(payload["stop_loss"])
 
+    compound = payload.get("compound", False)
+
     try:
         result = service.run_backtest(
             symbol=symbol,
@@ -230,8 +240,19 @@ def api_backtest():
             quote_amount=float(quote_amount),
             kline_limit=int(kline_limit),
             emergency_stop_pct=float(payload.get("emergency_stop_pct", 5)),
+            compound=bool(compound),
         )
         return ok({"backtest": result})
+    except Exception as exc:
+        return fail(str(exc))
+
+
+@app.post("/api/session/new")
+@require_api_key
+def api_session_new():
+    try:
+        service.new_session()
+        return ok({"message": "Nueva sesion creada.", "state": service.snapshot()})
     except Exception as exc:
         return fail(str(exc))
 

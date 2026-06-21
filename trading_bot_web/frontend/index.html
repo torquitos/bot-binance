@@ -250,6 +250,7 @@
                     <!-- Step 1 -->
                     <div class="step-content active" id="step1">
                         <h3>Seleccionar Par de Trading</h3>
+                        <input type="text" id="pairSearch" placeholder="Buscar símbolo..." style="width:100%;padding:6px 10px;border:1px solid var(--outline-variant);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.8rem;margin-bottom:8px;font-family:inherit;box-sizing:border-box">
                         <div class="pair-grid" id="pairGrid">
                             <div class="pair-btn selected" data-symbol="BTCUSDT">₿ BTC/USDT</div>
                             <div class="pair-btn" data-symbol="ETHUSDT">Ξ ETH/USDT</div>
@@ -289,6 +290,7 @@
                             <div class="form-group">
                                 <label>Precio de venta</label>
                                 <input type="number" id="configSellPrice" step="0.01" placeholder="Ej: 45000">
+                                <span id="priceWarning" style="display:none;color:var(--red);font-size:0.7rem;margin-top:4px">⚠️ Compra > Venta, revisá la configuración</span>
                             </div>
                             <div class="form-group">
                                 <label>Stop Loss</label>
@@ -401,6 +403,10 @@
                             </div>
                         </form>
                         <div id="btStrategyParams" style="margin-top:8px"></div>
+                        <div class="toggle-row" style="margin-top:8px">
+                            <span>Compound (reinvertir ganancias)</span>
+                            <label class="switch"><input type="checkbox" id="btCompound"><span class="slider"></span></label>
+                        </div>
                         <div id="backtestResults" class="backtest-results hidden">
                             <h3>Resultados</h3>
                             <div class="stats-row" id="btStats"></div>
@@ -434,9 +440,10 @@
                     </div>
                 </div>
                 <div class="panel">
-                    <div class="panel-head">
-                        <h2>Sesiones</h2>
-                    </div>
+                        <div class="panel-head">
+                            <h2>Sesiones</h2>
+                            <button class="btn btn-sm btn-ghost" id="newSessionBtn">+ Nueva sesión</button>
+                        </div>
                     <div class="table-wrap">
                         <table class="trade-table">
                             <thead><tr><th>Inicio</th><th>Fin</th><th>Símbolo</th><th>Trades</th><th>PnL</th><th>Estado</th></tr></thead>

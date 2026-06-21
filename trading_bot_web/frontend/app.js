@@ -547,22 +547,43 @@ async function loadMarketOptions() {
     // Populate selects
     $$("#chartSymbol, #btSymbol").forEach((el) => { el.innerHTML = so; el.value = "BTCUSDT"; });
     $$("#chartInterval, #btInterval").forEach((el) => { el.innerHTML = io; el.value = "15m"; });
-    // Populate pair grid
+    // Populate pair grid with search
     const grid = $("#pairGrid");
-    grid.innerHTML = d.symbols.slice(0, 20).map((s) =>
-      `<div class="pair-btn ${s === "BTCUSDT" ? "selected" : ""}" data-symbol="${s}">${s.startsWith("BTC") ? "₿" : s.startsWith("ETH") ? "Ξ" : s.startsWith("SOL") ? "◎" : "◆"} ${s.replace("USDT", "/USDT")}</div>`
-    ).join("");
-    if (!store.pairListenersAdded) {
-      $$(".pair-btn").forEach((btn) => btn.addEventListener("click", () => {
+    const allSymbols = d.symbols;
+    store.allSymbols = allSymbols;
+    function renderPairGrid(filter) {
+      const f = (filter || "").toUpperCase();
+      const filtered = f ? allSymbols.filter((s) => s.includes(f)) : allSymbols.slice(0, 20);
+      grid.innerHTML = (f && !filtered.length
+        ? `<div style="grid-column:1/-1;color:var(--on-surface-variant);font-size:0.75rem;padding:8px">Sin resultados</div>`
+        : filtered.map((s) =>
+            `<div class="pair-btn ${s === (store.state?.symbol || "BTCUSDT") ? "selected" : ""}" data-symbol="${s}">${s.startsWith("BTC") ? "₿" : s.startsWith("ETH") ? "Ξ" : s.startsWith("SOL") ? "◎" : "◆"} ${s.replace("USDT", "/USDT")}</div>`
+          ).join("")
+      );
+    }
+    renderPairGrid();
+    function bindPairClicks() {
+      $$(".pair-btn").forEach((btn) => btn.addEventListener("click", function pairClick() {
         store.userChangedPair = true;
-        storeFormValues.symbol = btn.dataset.symbol;
+        storeFormValues.symbol = this.dataset.symbol;
         $$(".pair-btn").forEach((b) => b.classList.remove("selected"));
-        btn.classList.add("selected");
-        const sym = btn.dataset.symbol;
+        this.classList.add("selected");
+        const sym = this.dataset.symbol;
         $("#chartSymbol").value = sym;
         refreshChart(sym, $("#chartInterval").value);
       }));
+    }
+    if (!store.pairListenersAdded) {
+      bindPairClicks();
       store.pairListenersAdded = true;
+    }
+    // Search/filter for pair grid
+    const searchInput = $("#pairSearch");
+    if (searchInput) {
+      searchInput.oninput = () => {
+        renderPairGrid(searchInput.value);
+        bindPairClicks();
+      };
     }
   } catch (e) { /* ignore */ }
 }
@@ -607,7 +628,7 @@ async function runAction(path, msg) {
 
 $("#buyBtn").addEventListener("click", () => runWithLoading("#buyBtn", "/api/manual/buy", "Compra ejecutada"));
 $("#sellBtn").addEventListener("click", () => runWithLoading("#sellBtn", "/api/manual/sell", "Venta ejecutada"));
-$("#startAutoBtn").addEventListener("click", () => runWithLoading("#startAutoBtn", "/api/auto/start", "Bot iniciado"));
+$("#startAutoBtn").addEventListener("click", () => { if (validatePrices()) runWithLoading("#startAutoBtn", "/api/auto/start", "Bot iniciado"); });
 $("#stopAutoBtn").addEventListener("click", () => runWithLoading("#stopAutoBtn", "/api/auto/stop", "Bot detenido"));
 $$("#clearLogsBtn, #clearLogsBtn2").forEach((el) => el.addEventListener("click", () => runAction("/api/logs/clear", "Logs limpiados")));
 // Mode pill toggle
@@ -617,6 +638,58 @@ $("#modePill").addEventListener("click", () => {
   } else {
     runWithLoading("#modePill", "/api/auto/start", "Bot iniciado");
   }
+});
+
+// Price validation (buy_price > sell_price warning)
+function validatePrices() {
+  const buy = parseFloat($("#configBuyPrice").value);
+  const sell = parseFloat($("#configSellPrice").value);
+  const warn = $("#priceWarning");
+  if (buy && sell && buy > sell) {
+    warn.style.display = "inline";
+    return false;
+  }
+  warn.style.display = "none";
+  return true;
+}
+$("#configBuyPrice").addEventListener("input", validatePrices);
+$("#configSellPrice").addEventListener("input", validatePrices);
+
+// Sound notification
+function playSignalSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+  } catch (_) {}
+}
+// Check logs for signals and play sound
+let lastSignalCount = 0;
+setInterval(() => {
+  const logs = store.state?.logs || [];
+  const signals = logs.filter((l) => l.level === "buy" || l.level === "sell");
+  if (signals.length > lastSignalCount) {
+    lastSignalCount = signals.length;
+    playSignalSound();
+  }
+}, 3000);
+
+// New session button
+$("#newSessionBtn").addEventListener("click", async () => {
+  try {
+    const d = await api("/api/session/new", { method: "POST" });
+    renderState(d.state);
+    showToast("Nueva sesion creada", true);
+    loadSessions();
+    loadTrades();
+  } catch (e) { showToast("Error: " + e.message, false); }
 });
 
 // Trailing stop range sync

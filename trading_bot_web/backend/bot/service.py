@@ -835,6 +835,24 @@ class TradingBotService:
             except Exception as e:
                 self.log("error", f"No se pudo vender: {e}")
 
+    def new_session(self):
+        with self.lock:
+            self.db.close_active_session()
+            self.session_id = self.db.create_session(self.state["symbol"])
+            self.state["session_pnl"] = Decimal("0")
+            self.state["operations_count"] = 0
+            self.state["status"] = "Nueva sesion iniciada"
+            self.state["position_open"] = False
+            self.state["position_qty"] = Decimal("0")
+            self.state["position_entry_price"] = None
+            self.state["position_quote_spent"] = Decimal("0")
+            self.state["position_highest_price"] = None
+            self.state["tp_hit_indices"] = []
+            self.state["position_initial_qty"] = Decimal("0")
+            self.state["last_order_side"] = None
+        self.db.save_state(self.state)
+        self.log("info", "Nueva sesion creada. Contadores reiniciados.")
+
     def get_trade_history(self, limit=50):
         return self.db.get_trades(session_id=self.session_id, limit=limit)
 
@@ -842,7 +860,8 @@ class TradingBotService:
         return self.db.get_sessions()
 
     def run_backtest(self, symbol, interval, strategy_name, strategy_params,
-                     quote_amount=100, kline_limit=500, emergency_stop_pct=5.0):
+                     quote_amount=100, kline_limit=500, emergency_stop_pct=5.0,
+                     compound=False):
         klines = self.get_klines_raw(symbol, interval, limit=kline_limit)
         if not klines:
             raise RuntimeError("No se pudieron obtener datos de mercado.")
@@ -865,6 +884,7 @@ class TradingBotService:
             quote_amount=float(quote_amount),
             evaluate_fn=evaluate_fn,
             emergency_stop_pct=float(emergency_stop_pct),
+            compound=bool(compound),
         )
 
     def snapshot(self):

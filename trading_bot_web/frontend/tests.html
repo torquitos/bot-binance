@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Frontend Tests</title>
+<style>
+  body { font-family: monospace; background: #111; color: #d3c5ac; padding: 20px; }
+  .pass { color: #0ecb81; } .fail { color: #f6465d; }
+  h1 { color: #f0b90b; }
+  #results { margin-top: 16px; }
+  .test-row { padding: 4px 0; }
+</style></head>
+<body>
+<h1>QuantBot Pro — Frontend Tests</h1>
+<div id="results"></div>
+<script>
+const results = document.getElementById("results");
+let passed = 0, failed = 0;
+function test(name, fn) {
+  try { fn(); passed++; results.innerHTML += `<div class="test-row pass">✓ ${name}</div>`; }
+  catch (e) { failed++; results.innerHTML += `<div class="test-row fail">✗ ${name}: ${e.message}</div>`; }
+}
+
+// Mock DOM
+document.body.innerHTML += '<div id="toast"><span id="toastIcon"></span><span id="toastMsg"></span></div>';
+document.body.innerHTML += '<div id="priceWarning"></div>';
+
+// Test helpers from app.js
+function toMoney(v) {
+  if (v == null || Number.isNaN(v)) return "$0.00";
+  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(v);
+}
+function toShort(v, d = 6) {
+  if (v == null || Number.isNaN(v)) return "-";
+  return Number(v).toLocaleString("es-CO", { maximumFractionDigits: d });
+}
+
+test("toMoney null returns $0.00", () => {
+  if (toMoney(null) !== "$0.00") throw new Error("Expected $0.00 got " + toMoney(null));
+});
+test("toMoney NaN returns $0.00", () => {
+  if (toMoney(NaN) !== "$0.00") throw new Error("Expected $0.00");
+});
+test("toMoney positive value", () => {
+  const r = toMoney(1234.5);
+  if (r !== "$1.234,50") throw new Error("Expected $1.234,50 got " + r);
+});
+test("toMoney negative value", () => {
+  const r = toMoney(-50.5);
+  if (r !== "-$50,50") throw new Error("Expected -$50,50 got " + r);
+});
+test("toShort null returns -", () => {
+  if (toShort(null) !== "-") throw new Error("Expected -");
+});
+test("toShort NaN returns -", () => {
+  if (toShort(NaN) !== "-") throw new Error("Expected -");
+});
+test("toShort formats number", () => {
+  const r = toShort(1234.5678, 2);
+  if (r !== "1.234,57") throw new Error("Expected 1.234,57 got " + r);
+});
+test("toShort crypto precision 6", () => {
+  const r = toShort(0.00155836, 6);
+  if (r !== "0,001558") throw new Error("Expected 0,001558 got " + r);
+});
+
+// Test formatPair
+function formatPair(s, b, q) { return b && q ? b + "/" + q : s ? (s.endsWith("USDT") ? s.slice(0, -4) + "/USDT" : s) : "-"; }
+test("formatPair with assets", () => {
+  if (formatPair("BTCUSDT", "BTC", "USDT") !== "BTC/USDT") throw new Error("Expected BTC/USDT");
+});
+test("formatPair symbol only", () => {
+  if (formatPair("BTCUSDT", null, null) !== "BTC/USDT") throw new Error("Expected BTC/USDT");
+});
+
+// Test validatePrices
+document.body.innerHTML += '<input id="configBuyPrice" value="40000"><input id="configSellPrice" value="45000"><span id="priceWarning" style="display:none"></span>';
+function validatePrices() {
+  const buy = parseFloat(document.getElementById("configBuyPrice").value);
+  const sell = parseFloat(document.getElementById("configSellPrice").value);
+  const warn = document.getElementById("priceWarning");
+  if (buy && sell && buy > sell) { warn.style.display = "inline"; return false; }
+  warn.style.display = "none";
+  return true;
+}
+test("validatePrices: buy < sell returns true", () => {
+  document.getElementById("configBuyPrice").value = "40000";
+  document.getElementById("configSellPrice").value = "45000";
+  if (!validatePrices()) throw new Error("Should be valid");
+});
+test("validatePrices: buy > sell returns false", () => {
+  document.getElementById("configBuyPrice").value = "50000";
+  document.getElementById("configSellPrice").value = "45000";
+  if (validatePrices()) throw new Error("Should be invalid");
+  if (document.getElementById("priceWarning").style.display !== "inline") throw new Error("Warning should show");
+});
+test("validatePrices: empty buy returns true", () => {
+  document.getElementById("configBuyPrice").value = "";
+  document.getElementById("configSellPrice").value = "45000";
+  if (!validatePrices()) throw new Error("Should be valid");
+});
+
+const total = passed + failed;
+results.innerHTML += `<hr><div class="${failed > 0 ? "fail" : "pass"}">${passed}/${total} tests passed${failed > 0 ? ", " + failed + " FAILED" : ""}</div>`;
+</script></body></html>
