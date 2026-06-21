@@ -104,9 +104,10 @@ body {
   background: var(--surface-variant); border: 1px solid var(--outline-variant);
   color: var(--on-surface); padding: 8px 16px; border-radius: 8px;
   font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
-  cursor: pointer; transition: border-color 0.2s;
+  cursor: pointer; transition: border-color 0.2s, background 0.2s, color 0.2s;
+  font-family: inherit;
 }
-.btn-wallet:hover { border-color: var(--primary); }
+.btn-wallet:hover { border-color: var(--primary); background: rgba(240,185,11,0.06); color: var(--primary); }
 .btn-wallet .icon { color: var(--primary); }
 
 .topbar-avatar {
@@ -208,6 +209,16 @@ body {
   transition: border-color 0.2s;
 }
 .bot-card.active { border-color: rgba(240, 185, 11, 0.4); box-shadow: 0 0 20px rgba(240, 185, 11, 0.08); }
+.bot-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:16px; border-bottom:1px solid var(--outline-variant); }
+.bot-card-title-row { display:flex; align-items:center; gap:10px; }
+.bot-card-position { padding:12px 16px; border-bottom:1px solid var(--outline-variant); }
+.position-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.bot-card-balances { padding:12px 16px; border-bottom:1px solid var(--outline-variant); }
+.bot-card-actions { padding:12px 16px; }
+.action-row { display:flex; gap:6px; }
+.action-row .btn { flex:1; }
+.pnl-bar { width:100%; height:6px; background:var(--surface-variant); border-radius:3px; overflow:hidden; }
+.pnl-fill { height:100%; border-radius:3px; transition:width 0.5s, background 0.3s; }
 .bot-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
 .bot-card-icon {
   width: 40px; height: 40px; border-radius: 10px;
@@ -224,20 +235,16 @@ body {
 .bot-badge.running { background: rgba(240, 185, 11, 0.12); color: var(--primary); }
 .bot-badge.paused { background: var(--surface-variant); color: var(--on-surface-variant); }
 
-.bot-card-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-.bot-stat { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; }
-.bot-stat-label { font-size: 0.6rem; color: var(--on-surface-variant); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
-.bot-stat-value { font-size: 0.9rem; font-weight: 700; }
-
-.bot-card-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--outline-variant); }
-.bot-card-footer .uptime { font-size: 0.7rem; color: var(--on-surface-variant); }
-.bot-actions { display: flex; gap: 4px; }
-.bot-actions button {
-  background: none; border: none; cursor: pointer;
-  color: var(--on-surface-variant); padding: 4px; border-radius: 4px;
-  font-size: 1.1rem; transition: color 0.2s;
-}
-.bot-actions button:hover { color: var(--primary); }
+.bot-card .btn { font-size: 0.75rem; font-weight: 700; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-family: inherit; transition: background 0.2s, opacity 0.2s; }
+.bot-card .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.bot-card .btn-buy { background: rgba(14,203,129,0.12); color: var(--green); }
+.bot-card .btn-buy:hover:not(:disabled) { background: rgba(14,203,129,0.25); }
+.bot-card .btn-sell { background: rgba(246,70,93,0.12); color: var(--red); }
+.bot-card .btn-sell:hover:not(:disabled) { background: rgba(246,70,93,0.25); }
+.bot-card .btn-primary { background: rgba(240,185,11,0.12); color: var(--primary); }
+.bot-card .btn-primary:hover:not(:disabled) { background: rgba(240,185,11,0.25); }
+.bot-card .btn-ghost { background: transparent; color: var(--on-surface-variant); border: 1px solid var(--outline-variant); }
+.bot-card .btn-ghost:hover:not(:disabled) { background: var(--surface-variant); color: var(--on-surface); }
 
 /* ── Volatility Monitor ── */
 .volatility-panel {
@@ -520,8 +527,8 @@ input[type="range"]::-webkit-slider-runnable-track { height: 6px; background: va
   .form-row { grid-template-columns: 1fr; }
   .pair-grid { grid-template-columns: 1fr; }
   .dashboard-grid { grid-template-columns: 1fr; }
-  .bot-card-footer .bot-actions { flex-wrap: wrap; }
-  .bot-card-footer .bot-actions .btn { flex: 1; min-width: 80px; }
+  .bot-card .action-row { flex-wrap: wrap; }
+  .bot-card .action-row .btn { flex: 1; min-width: 80px; }
   .panel-head { flex-wrap: wrap; gap: 8px; }
   .stepper { gap: 4px; }
   .stepper-label { font-size: 0.65rem; }

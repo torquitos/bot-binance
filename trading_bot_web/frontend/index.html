@@ -134,35 +134,67 @@
                     <div>
                         <div class="bot-card active" id="botCard">
                             <div class="bot-card-header">
-                                <div style="display:flex;align-items:center;gap:12px">
+                                <div class="bot-card-title-row">
                                     <div class="bot-card-icon">
-                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="7" cy="5" r="2"/><circle cx="17" cy="5" r="2"/><path d="M7 5h10"/></svg>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="7" cy="5" r="2"/><circle cx="17" cy="5" r="2"/><path d="M7 5h10"/></svg>
                                     </div>
-                                    <div class="bot-card-info">
-                                        <h4 id="botCardTitle">BTC/USDT</h4>
-                                        <span id="botCardStrategy">Umbral</span>
+                                    <div>
+                                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                                            <h4 id="botCardTitle" style="margin:0;font-size:0.95rem">BTC/USDT</h4>
+                                            <span class="bot-badge" id="botCardStatus">—</span>
+                                        </div>
+                                        <span style="font-size:0.7rem;color:var(--on-surface-variant)" id="botCardStrategy">Umbral</span>
                                     </div>
                                 </div>
-                                <span class="bot-badge running" id="botCardStatus">Running</span>
-                            </div>
-                            <div class="bot-card-stats">
-                                <div class="bot-stat">
-                                    <div class="bot-stat-label">Status</div>
-                                    <div class="bot-stat-value bot-stat-value" id="botStatusValue">Listo</div>
-                                </div>
-                                <div class="bot-stat">
-                                    <div class="bot-stat-label">Uptime</div>
-                                    <div class="bot-stat-value" id="botUptimeValue">—</div>
+                                <div style="text-align:right">
+                                    <div style="font-size:1.1rem;font-weight:700;letter-spacing:-0.02em" id="botCardPrice">$0.00</div>
+                                    <div style="font-size:0.6rem;color:var(--on-surface-variant)">Último precio</div>
                                 </div>
                             </div>
-                            <div class="bot-card-footer">
-                                <span class="uptime" id="botCredentials">Credenciales: —</span>
-                                <div class="bot-actions">
-                                    <button class="btn btn-buy btn-sm" id="buyBtn" disabled>Comprar</button>
-                                    <button class="btn btn-sell btn-sm" id="sellBtn" disabled>Vender</button>
-                                    <button class="btn btn-primary btn-sm" id="startAutoBtn" disabled>▶ Auto</button>
-                                    <button class="btn btn-ghost btn-sm" id="stopAutoBtn" disabled>⏹</button>
+                            <div class="bot-card-position" id="positionPanel">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                                    <span style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--on-surface-variant)">Posición</span>
+                                    <span class="badge" id="positionBadge" style="font-size:0.6rem">CERRADA</span>
                                 </div>
+                                <div class="position-grid">
+                                    <div>
+                                        <div style="font-size:0.55rem;color:var(--on-surface-variant);text-transform:uppercase">Entry</div>
+                                        <div style="font-size:0.85rem;font-weight:600" id="posEntry">—</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size:0.55rem;color:var(--on-surface-variant);text-transform:uppercase">Precio Act.</div>
+                                        <div style="font-size:0.85rem;font-weight:600" id="posCurrent">—</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size:0.55rem;color:var(--on-surface-variant);text-transform:uppercase">P&amp;L</div>
+                                        <div style="font-size:0.85rem;font-weight:700" id="posPnl">$0.00</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size:0.55rem;color:var(--on-surface-variant);text-transform:uppercase">Tamaño</div>
+                                        <div style="font-size:0.85rem;font-weight:600" id="posSize">—</div>
+                                    </div>
+                                </div>
+                                <div style="margin-top:8px">
+                                    <div class="pnl-bar" id="pnlBar"><div class="pnl-fill" id="pnlFill" style="width:0%"></div></div>
+                                </div>
+                            </div>
+                            <div class="bot-card-balances" id="balancesPanel">
+                                <div style="display:flex;justify-content:space-between">
+                                    <div><span style="font-size:0.6rem;color:var(--on-surface-variant)">Balance USDT</span><br><span style="font-weight:700;font-size:0.95rem" id="balUsdt">0.00</span></div>
+                                    <div><span style="font-size:0.6rem;color:var(--on-surface-variant)">Balance BTC</span><br><span style="font-weight:700;font-size:0.95rem" id="balBtc">0.000000</span></div>
+                                    <div><span style="font-size:0.6rem;color:var(--on-surface-variant)">P&amp;L Sesión</span><br><span style="font-weight:700;font-size:0.95rem" id="balPnl">$0.00</span></div>
+                                </div>
+                            </div>
+                            <div class="bot-card-actions" id="botActions">
+                                <div class="action-row">
+                                    <button class="btn btn-buy" id="buyBtn" disabled>Comprar</button>
+                                    <button class="btn btn-sell" id="sellBtn" disabled>Vender</button>
+                                </div>
+                                <div class="action-row" style="margin-top:6px">
+                                    <button class="btn btn-primary" id="startAutoBtn" disabled>▶ Automático</button>
+                                    <button class="btn btn-ghost" id="stopAutoBtn" disabled>⏹ Detener</button>
+                                </div>
+                                <div style="margin-top:4px;font-size:0.6rem;color:var(--on-surface-variant);text-align:center" id="botStatusLine">—</div>
                             </div>
                         </div>
 

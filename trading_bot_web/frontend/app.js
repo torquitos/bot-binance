@@ -253,19 +253,67 @@ function renderState(state) {
   $("#envValue2").textContent = state.use_testnet ? "Binance Testnet" : "Binance Live";
   renderBalances(state);
   // Bot card (always update)
+  const qa = state.quote_asset || "USDT", ba = state.base_asset || "BTC";
   $("#botCardTitle").textContent = formatPair(state.symbol, state.base_asset, state.quote_asset);
   $("#botCardStrategy").textContent = state.strategy_label || state.strategy;
-  $("#botCardStatus").textContent = state.bot_active ? "Running" : "Detenido";
-  $("#botCardStatus").className = `bot-badge ${state.bot_active ? "running" : "paused"}`;
-  $("#botStatusValue").textContent = state.status || "Listo";
-  const uptime = Math.floor((Date.now() - store.startTime) / 1000);
-  const h = Math.floor(uptime / 3600), m = Math.floor((uptime % 3600) / 60);
-  $("#botUptimeValue").textContent = `${h}h ${m}m`;
-  $("#botCredentials").textContent = `Credenciales: ${state.credentials_ready ? "Listas" : "Faltan"}`;
-  // Controls (always update)
-  $("#buyBtn").disabled = !state.credentials_ready || state.position_open;
-  $("#sellBtn").disabled = !state.credentials_ready || !state.position_open;
-  $("#startAutoBtn").disabled = !state.credentials_ready || state.bot_active;
+  $("#botCardStatus").textContent = state.bot_active ? "Automático" : (state.position_open ? "En posición" : "En espera");
+  $("#botCardStatus").className = `bot-badge ${state.bot_active ? "running" : state.position_open ? "paused" : ""}`;
+  $("#botCardPrice").textContent = toShort(state.last_price, 2);
+  // Position panel
+  if (state.position_open) {
+    $("#positionBadge").textContent = "ABIERTA";
+    $("#positionBadge").style.color = "var(--green)";
+    const entry = state.position_entry_price || 0;
+    const current = state.last_price || 0;
+    const qty = state.position_qty || 0;
+    const pnl = (current - entry) * qty;
+    const pnlPct = entry ? ((current - entry) / entry) * 100 : 0;
+    const color = pnl >= 0 ? "var(--green)" : "var(--red)";
+    $("#posEntry").textContent = toShort(entry, 2);
+    $("#posCurrent").textContent = toShort(current, 2);
+    $("#posCurrent").style.color = color;
+    $("#posPnl").textContent = (pnl >= 0 ? "+" : "") + toShort(pnl, 2);
+    $("#posPnl").style.color = color;
+    $("#posSize").textContent = toShort(qty, 6) + " " + ba;
+    // PnL bar
+    const pnlPctClamped = Math.max(-100, Math.min(100, pnlPct));
+    const fillW = Math.abs(pnlPctClamped);
+    const fillColor = pnl >= 0 ? "var(--green)" : "var(--red)";
+    $("#pnlFill").style.width = fillW + "%";
+    $("#pnlFill").style.background = fillColor;
+  } else {
+    $("#positionBadge").textContent = "CERRADA";
+    $("#positionBadge").style.color = "var(--on-surface-variant)";
+    $("#posEntry").textContent = "—";
+    $("#posCurrent").textContent = "—";
+    $("#posCurrent").style.color = "";
+    $("#posPnl").textContent = "$0.00";
+    $("#posPnl").style.color = "";
+    $("#posSize").textContent = "—";
+    $("#pnlFill").style.width = "0%";
+  }
+  // Balances
+  const bal = state.balances || {};
+  const usdtBal = bal[qa] ? bal[qa].total : 0;
+  const btcBal = bal[ba] ? bal[ba].total : 0;
+  $("#balUsdt").textContent = toShort(usdtBal, 2);
+  $("#balBtc").textContent = toShort(btcBal, 6);
+  $("#balPnl").textContent = toMoney(state.session_pnl);
+  $("#balPnl").style.color = (state.session_pnl || 0) >= 0 ? "var(--green)" : "var(--red)";
+  // Status line
+  const statusParts = [];
+  if (!state.credentials_ready) statusParts.push("Credenciales faltantes");
+  else if (state.use_testnet) statusParts.push("Testnet · Simulación");
+  else statusParts.push("Live · Real");
+  if (state.bot_active) statusParts.push("Bot activo");
+  else statusParts.push("Manual");
+  statusParts.push(state.operations_count + " ops");
+  $("#botStatusLine").textContent = statusParts.join(" · ");
+  // Controls
+  const credsOk = state.credentials_ready;
+  $("#buyBtn").disabled = !credsOk || state.position_open;
+  $("#sellBtn").disabled = !credsOk || !state.position_open;
+  $("#startAutoBtn").disabled = !credsOk || state.bot_active;
   $("#stopAutoBtn").disabled = !state.bot_active;
   // Logs (always update)
   renderLogs(state.logs || []);
@@ -514,6 +562,14 @@ $("#sellBtn").addEventListener("click", () => runAction("/api/manual/sell", "Ven
 $("#startAutoBtn").addEventListener("click", () => runAction("/api/auto/start", "Bot iniciado"));
 $("#stopAutoBtn").addEventListener("click", () => runAction("/api/auto/stop", "Bot detenido"));
 $$("#clearLogsBtn, #clearLogsBtn2").forEach((el) => el.addEventListener("click", () => runAction("/api/logs/clear", "Logs limpiados")));
+// Mode pill toggle
+$("#modePill").addEventListener("click", () => {
+  if (store.state?.bot_active) {
+    runAction("/api/auto/stop", "Bot detenido");
+  } else {
+    runAction("/api/auto/start", "Bot iniciado");
+  }
+});
 
 // Trailing stop range sync
 $("#trailingStopPct").addEventListener("input", () => {
