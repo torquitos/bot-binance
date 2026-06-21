@@ -291,4 +291,26 @@ def api_stream():
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "5000"))
     debug = os.getenv("FLASK_ENV", "production") == "development"
-    app.run(debug=debug, host="0.0.0.0", port=port)
+    use_ssl = os.getenv("SSL_ENABLED", "false").lower() == "true"
+
+    if use_ssl:
+        ssl_cert = os.getenv("SSL_CERT", "cert.pem")
+        ssl_key = os.getenv("SSL_KEY", "key.pem")
+        cert_path = BASE_DIR / ssl_cert
+        key_path = BASE_DIR / ssl_key
+
+        if not cert_path.exists() or not key_path.exists():
+            import subprocess
+            subprocess.run([
+                "openssl", "req", "-x509", "-newkey", "rsa:4096",
+                "-keyout", str(key_path),
+                "-out", str(cert_path),
+                "-days", "365", "-nodes",
+                "-subj", "/CN=localhost"
+            ], check=True, capture_output=True)
+            print(f"📜 Certificado SSL auto-generado: {cert_path}")
+
+        app.run(debug=debug, host="0.0.0.0", port=port,
+                ssl_context=(str(cert_path), str(key_path)))
+    else:
+        app.run(debug=debug, host="0.0.0.0", port=port)
