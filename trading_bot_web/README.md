@@ -742,6 +742,8 @@ trading_bot_web/
 
 El trading de criptomonedas conlleva **riesgo de pérdida total del capital**. Este software se proporciona "tal cual", sin garantías de ningún tipo. El autor no se responsabiliza por pérdidas financieras.
 
+**→ Lee el [DESCARGO DE RESPONSABILIDAD](./DISCLAIMER.md) completo antes de usar este software.**
+
 **Siempre:**
 1. Prueba primero en **Testnet** hasta entender el comportamiento
 2. Empieza con **montos pequeños** que puedas perder

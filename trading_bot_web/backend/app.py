@@ -63,7 +63,21 @@ def static_files(path):
 @app.get("/api/health")
 @limiter.exempt
 def api_health():
-    return ok({"message": "Backend operativo"})
+    try:
+        state = service.snapshot()
+        return ok({
+            "message": "Backend operativo",
+            "uptime": time.time() - service.start_time if hasattr(service, "start_time") else None,
+            "bot_active": state.get("bot_active", False),
+            "position_open": state.get("position_open", False),
+            "credentials_ready": state.get("credentials_ready", False),
+            "last_price": state.get("last_price"),
+            "operations_count": state.get("operations_count", 0),
+            "last_error": state.get("last_error"),
+            "ws_connected": service._ws_started if hasattr(service, "_ws_started") else None,
+        })
+    except Exception as exc:
+        return ok({"message": "Backend operativo", "status": "degradado", "error": str(exc)})
 
 
 @app.get("/api/state")

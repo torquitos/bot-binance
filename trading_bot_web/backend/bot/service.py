@@ -1,9 +1,11 @@
 import json
+import logging
 import os
 import threading
 import time
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation, ROUND_DOWN
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from binance.client import Client
@@ -19,9 +21,18 @@ class TradingBotService:
     INTERVAL_OPTIONS = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"]
 
     def __init__(self):
+        self.start_time = time.time()
         self.data_dir = Path(__file__).resolve().parent.parent / "data"
         self.data_dir.mkdir(exist_ok=True)
         self.log_file = self.data_dir / "activity.log"
+
+        self.file_handler = RotatingFileHandler(
+            self.log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
+        )
+        self.file_handler.setFormatter(logging.Formatter("%(message)s"))
+        self.file_logger = logging.getLogger("trading_bot")
+        self.file_logger.setLevel(logging.INFO)
+        self.file_logger.addHandler(self.file_handler)
 
         self.db = Database(self.data_dir / "bot.db")
 
@@ -185,13 +196,13 @@ class TradingBotService:
         entry = {"time": self._now(), "level": level, "message": message}
         with self.lock:
             self.state["logs"] = [entry] + self.state["logs"][:149]
-        with self.log_file.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(entry, ensure_ascii=True) + "\n")
+        self.file_logger.info(json.dumps(entry, ensure_ascii=True))
 
     def clear_logs(self):
         with self.lock:
             self.state["logs"] = []
         self.log_file.write_text("", encoding="utf-8")
+        self.file_handler.doRollover()
         self.log("info", "Registro limpiado.")
 
     def is_ready(self):
