@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantBot Pro — Trading Automatizado</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <h1>QuantBot Pro</h1>
+            <div class="status">
+                <div class="status-dot"></div>
+                <span class="status-text" id="envValue">Testnet</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <button class="active" data-tab="dashboard">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                <span>Dashboard</span>
+            </button>
+            <button data-tab="strategies">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span>Estrategias</span>
+            </button>
+            <button data-tab="history">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Historial</span>
+            </button>
+            <button data-tab="portfolio">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                <span>Portafolio</span>
+            </button>
+        </nav>
+        <div class="sidebar-bottom">
+            <button id="backtestLink">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                <span>Backtesting</span>
+            </button>
+            <button id="configLink">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                <span>API Settings</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Top Bar -->
+    <header class="topbar">
+        <div class="topbar-left">
+            <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="20" height="20"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <h2>QuantBot Terminal</h2>
+            <nav class="topbar-nav" id="topMarketNav">
+                <a class="active">Spot</a>
+            </nav>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-price">
+                <div class="value" id="priceValue">0.00</div>
+                <div class="change" id="priceLabel">Cargando...</div>
+            </div>
+            <button class="btn-wallet" id="modePill">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg> MANUAL
+            </button>
+            <button class="topbar-notif" id="clearLogsBtn">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </button>
+            <div class="topbar-avatar">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="main-inner">
+
+            <!-- ═══ DASHBOARD ═══ -->
+            <section id="tab-dashboard" class="tab-content">
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <span class="stat-label">P&L Sesión</span>
+                        <strong class="stat-value" id="pnlValue">$0.00</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Operaciones</span>
+                        <strong class="stat-value" id="opsValue">0</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Posición</span>
+                        <strong class="stat-value" id="positionValue">Cerrada</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Entorno</span>
+                        <strong class="stat-value" id="envValue2">Testnet</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Balance</span>
+                        <strong class="stat-value" id="balancesValue">...</strong>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <!-- Left: Chart -->
+                    <div class="panel chart-panel">
+                        <div class="panel-head">
+                            <h2 id="chartTitle">BTCUSDT · 15m</h2>
+                            <div class="chart-controls">
+                                <select id="chartSymbol"></select>
+                                <select id="chartInterval">
+                                    <option value="1m">1m</option>
+                                    <option value="5m">5m</option>
+                                    <option value="15m" selected>15m</option>
+                                    <option value="30m">30m</option>
+                                    <option value="1h">1h</option>
+                                    <option value="4h">4h</option>
+                                    <option value="1d">1d</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="candlesChart" class="candles-chart"></div>
+                        <div id="chartLegend" class="chart-legend">Cargando...</div>
+                        <div class="indicator-bar" id="indicatorBar">
+                            <span>Indicadores no disponibles</span>
+                        </div>
+                    </div>
+
+                    <!-- Right: Bot Card + Controls -->
+                    <div>
+                        <div class="bot-card active" id="botCard">
+                            <div class="bot-card-header">
+                                <div style="display:flex;align-items:center;gap:12px">
+                                    <div class="bot-card-icon">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="7" cy="5" r="2"/><circle cx="17" cy="5" r="2"/><path d="M7 5h10"/></svg>
+                                    </div>
+                                    <div class="bot-card-info">
+                                        <h4 id="botCardTitle">BTC/USDT</h4>
+                                        <span id="botCardStrategy">Umbral</span>
+                                    </div>
+                                </div>
+                                <span class="bot-badge running" id="botCardStatus">Running</span>
+                            </div>
+                            <div class="bot-card-stats">
+                                <div class="bot-stat">
+                                    <div class="bot-stat-label">Status</div>
+                                    <div class="bot-stat-value bot-stat-value" id="botStatusValue">Listo</div>
+                                </div>
+                                <div class="bot-stat">
+                                    <div class="bot-stat-label">Uptime</div>
+                                    <div class="bot-stat-value" id="botUptimeValue">—</div>
+                                </div>
+                            </div>
+                            <div class="bot-card-footer">
+                                <span class="uptime" id="botCredentials">Credenciales: —</span>
+                                <div class="bot-actions">
+                                    <button class="btn btn-buy btn-sm" id="buyBtn" disabled>Comprar</button>
+                                    <button class="btn btn-sell btn-sm" id="sellBtn" disabled>Vender</button>
+                                    <button class="btn btn-primary btn-sm" id="startAutoBtn" disabled>▶ Auto</button>
+                                    <button class="btn btn-ghost btn-sm" id="stopAutoBtn" disabled>⏹</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Volatility Monitor -->
+                        <div class="volatility-panel">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                                <h4>Monitor de Volatilidad</h4>
+                                <span style="font-size:0.6rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:4px">
+                                    <span style="width:6px;height:6px;border-radius:50%;background:var(--primary-container)"></span> ACTIVO
+                                </span>
+                            </div>
+                            <div class="vol-chart" id="volChart"></div>
+                            <div style="display:flex;justify-content:space-between;align-items:flex-end">
+                                <div>
+                                    <div style="font-size:0.6rem;color:var(--on-surface-variant)">Precio Actual</div>
+                                    <div style="font-size:1rem;font-weight:700" id="volPrice">$0.00</div>
+                                </div>
+                                <div class="volatility-bar" id="volBars"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Log -->
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>Actividad</h2>
+                        <button class="btn btn-sm btn-ghost" id="clearLogsBtn2">Limpiar</button>
+                    </div>
+                    <div class="log-box" id="logBox">Sin actividad aún.</div>
+                </div>
+            </section>
+
+            <!-- ═══ ESTRATEGIAS ═══ -->
+            <section id="tab-strategies" class="tab-content">
+                <div class="glass-panel">
+                    <div class="stepper">
+                        <div class="stepper-track"></div>
+                        <div class="stepper-step">
+                            <div class="stepper-circle active" data-step="1">1</div>
+                            <span class="stepper-label active">Par</span>
+                        </div>
+                        <div class="stepper-step">
+                            <div class="stepper-circle" data-step="2">2</div>
+                            <span class="stepper-label">Lógica</span>
+                        </div>
+                        <div class="stepper-step">
+                            <div class="stepper-circle" data-step="3">3</div>
+                            <span class="stepper-label">Riesgo</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 1 -->
+                    <div class="step-content active" id="step1">
+                        <h3>Seleccionar Par de Trading</h3>
+                        <div class="pair-grid" id="pairGrid">
+                            <div class="pair-btn selected" data-symbol="BTCUSDT">₿ BTC/USDT</div>
+                            <div class="pair-btn" data-symbol="ETHUSDT">Ξ ETH/USDT</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Intervalo de velas</label>
+                            <select id="strategyInterval">
+                                <option value="1m">1m</option>
+                                <option value="5m">5m</option>
+                                <option value="15m" selected>15m</option>
+                                <option value="30m">30m</option>
+                                <option value="1h">1h</option>
+                                <option value="4h">4h</option>
+                                <option value="1d">1d</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Estrategia</label>
+                            <select id="strategySelect"></select>
+                        </div>
+                        <div id="strategyParams" class="form-row" style="margin-top:8px"></div>
+                        <button class="btn btn-primary btn-full" id="step1Next" style="margin-top:16px">Siguiente →</button>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="step-content" id="step2">
+                        <h3>Configurar Parámetros</h3>
+                        <div class="form-group">
+                            <label>Monto por operación (USDT)</label>
+                            <input type="number" id="configQuoteAmount" value="100" min="10" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Precio de compra</label>
+                            <input type="number" id="configBuyPrice" step="0.01" placeholder="Ej: 40000">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Precio de venta</label>
+                                <input type="number" id="configSellPrice" step="0.01" placeholder="Ej: 45000">
+                            </div>
+                            <div class="form-group">
+                                <label>Stop Loss</label>
+                                <input type="number" id="configStopLoss" step="0.01" placeholder="Ej: 38000">
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:16px">
+                            <button class="btn btn-ghost" id="step2Prev">← Atrás</button>
+                            <button class="btn btn-primary btn-full" id="step2Next">Siguiente →</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="step-content" id="step3">
+                        <h3>Gestión de Riesgo</h3>
+                        <div class="toggle-row">
+                            <span>Trailing Stop</span>
+                            <label class="switch"><input type="checkbox" id="trailingStopToggle"><span class="slider"></span></label>
+                        </div>
+                        <div id="trailingStopBody" style="display:none;padding:8px 0">
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <span style="font-size:0.8rem">Distancia</span>
+                                <input type="range" id="trailingStopPct" min="0.5" max="20" step="0.5" value="2" style="flex:1">
+                                <span style="font-size:0.85rem;font-weight:700" id="trailingStopLabel">2.0%</span>
+                            </div>
+                        </div>
+                        <div class="toggle-row">
+                            <span>Take Profit Parcial</span>
+                            <label class="switch"><input type="checkbox" id="tpToggle"><span class="slider"></span></label>
+                        </div>
+                        <div id="tpBody" style="display:none;padding:8px 0">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Niveles (%)</label>
+                                    <input type="text" id="tpLevels" value="3,5,10" placeholder="ej: 3,5,10">
+                                </div>
+                                <div class="form-group">
+                                    <label>Asignaciones (%)</label>
+                                    <input type="text" id="tpAllocations" value="33,33,34" placeholder="ej: 33,33,34">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="toggle-row">
+                            <span>DCA (Compras Automáticas)</span>
+                            <label class="switch"><input type="checkbox" id="dcaToggle"><span class="slider"></span></label>
+                        </div>
+                        <div id="dcaBody" style="display:none;padding:8px 0">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Monto (USDT)</label>
+                                    <input type="number" id="dcaAmount" value="100" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Intervalo (min)</label>
+                                    <input type="number" id="dcaInterval" value="60" min="1">
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:16px">
+                            <button class="btn btn-ghost" id="step3Prev">← Atrás</button>
+                            <button class="btn btn-primary btn-full" id="deployBtn">CONFIRMAR &amp; GUARDAR</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Backtest (collapsible) -->
+                <div class="panel" style="margin-top:20px" id="backtestPanel">
+                    <div class="panel-head">
+                        <h2>Backtesting</h2>
+                        <button class="btn btn-sm btn-ghost" id="toggleBacktest">Mostrar</button>
+                    </div>
+                    <div id="backtestBody" style="display:none">
+                        <p class="sub" style="font-size:0.8rem;color:var(--on-surface-variant);margin-bottom:12px">Prueba tu estrategia con datos históricos.</p>
+                        <form id="backtestForm" class="form-row" style="grid-template-columns:1fr 1fr 1fr">
+                            <div class="form-group">
+                                <label>Par</label>
+                                <select name="bt_symbol" id="btSymbol"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Intervalo</label>
+                                <select name="bt_interval" id="btInterval">
+                                    <option value="1m">1m</option>
+                                    <option value="5m">5m</option>
+                                    <option value="15m" selected>15m</option>
+                                    <option value="30m">30m</option>
+                                    <option value="1h">1h</option>
+                                    <option value="4h">4h</option>
+                                    <option value="1d">1d</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Velas</label>
+                                <select name="bt_limit" id="btLimit">
+                                    <option value="100">100</option>
+                                    <option value="200">200</option>
+                                    <option value="500" selected>500</option>
+                                    <option value="1000">1000</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Estrategia</label>
+                                <select name="bt_strategy" id="btStrategy"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Monto (USDT)</label>
+                                <input name="bt_amount" type="number" value="100" min="10" step="0.01">
+                            </div>
+                            <div style="display:flex;align-items:flex-end">
+                                <button type="submit" class="btn btn-primary btn-full">Ejecutar</button>
+                            </div>
+                        </form>
+                        <div id="btStrategyParams" style="margin-top:8px"></div>
+                        <div id="backtestResults" class="backtest-results hidden">
+                            <h3>Resultados</h3>
+                            <div class="stats-row" id="btStats"></div>
+                            <div class="table-wrap" style="margin-top:12px">
+                                <table class="trade-table">
+                                    <thead><tr><th>#</th><th>Tipo</th><th>Precio</th><th>Cantidad</th><th>Total</th><th>PnL</th><th>Motivo</th></tr></thead>
+                                    <tbody id="btTradeBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ HISTORIAL ═══ -->
+            <section id="tab-history" class="tab-content">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>Historial de operaciones</h2>
+                        <span class="badge" id="tradesCount">0 trades</span>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="trade-table">
+                            <thead>
+                                <tr><th>Hora</th><th>Par</th><th>Tipo</th><th>Precio</th><th>Cantidad</th><th>Total</th><th>PnL</th><th>Motivo</th></tr>
+                            </thead>
+                            <tbody id="tradeBody">
+                                <tr><td colspan="8" class="empty">Sin operaciones aún</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>Sesiones</h2>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="trade-table">
+                            <thead><tr><th>Inicio</th><th>Fin</th><th>Símbolo</th><th>Trades</th><th>PnL</th><th>Estado</th></tr></thead>
+                            <tbody id="sessionsBody">
+                                <tr><td colspan="6" class="empty">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ PORTAFOLIO ═══ -->
+            <section id="tab-portfolio" class="tab-content">
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <span class="stat-label">Balance USDT</span>
+                        <strong class="stat-value" id="portfolioUsdt">0.00</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Balance Base</span>
+                        <strong class="stat-value" id="portfolioBase">0.00</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">PnL Total</span>
+                        <strong class="stat-value" id="portfolioPnl">$0.00</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Posición</span>
+                        <strong class="stat-value" id="portfolioPosition">Cerrada</strong>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>Curva de P&amp;L</h2>
+                    </div>
+                    <div id="pnlChart" class="pnl-chart"></div>
+                </div>
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>Balances</h2>
+                    </div>
+                    <div id="balancesDetail" class="balances-grid">
+                        <span style="color:var(--on-surface-variant)">Cargando balances...</span>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <div class="toast-inner">
+            <span id="toastIcon">✅</span>
+            <span id="toastMsg">Configuración guardada</span>
+        </div>
+    </div>
+
+    <!-- Bottom Nav (mobile) -->
+    <nav class="bottom-nav" id="bottomNav">
+        <button class="active" data-tab="dashboard">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+            <span>Dashboard</span>
+        </button>
+        <button data-tab="strategies">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Estrategias</span>
+        </button>
+        <button data-tab="history">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Historial</span>
+        </button>
+        <button data-tab="portfolio">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+            <span>Portafolio</span>
+        </button>
+    </nav>
+
+    <!-- Mobile Drawer -->
+    <div class="drawer-overlay hidden" id="drawerOverlay"></div>
+    <aside class="drawer hidden" id="drawer">
+        <div class="drawer-head">
+            <h2>QuantBot Pro</h2>
+            <button class="drawer-close" id="drawerClose">&times;</button>
+        </div>
+        <div class="drawer-body">
+            <button class="drawer-btn" id="drawerBacktest">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                <span>Backtesting</span>
+            </button>
+            <button class="drawer-btn" id="drawerConfig">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                <span>API Settings</span>
+            </button>
+            <div class="drawer-status">
+                <div class="status-dot"></div>
+                <span id="drawerEnv">Testnet</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- API Settings Modal -->
+    <div class="modal-overlay hidden" id="apiModal">
+        <div class="modal">
+            <div class="modal-head">
+                <h2>API Settings</h2>
+                <button class="modal-close" id="apiModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:0.8rem;color:var(--on-surface-variant);margin-bottom:16px">Binance Testnet API keys. Si están vacías, el bot usa simulación.</p>
+                <div class="form-group">
+                    <label>API Key</label>
+                    <input type="password" id="apiKeyInput" placeholder="Ingresa tu Binance API Key">
+                </div>
+                <div class="form-group">
+                    <label>Secret Key</label>
+                    <input type="password" id="apiSecretInput" placeholder="Ingresa tu Binance Secret Key">
+                </div>
+                <div class="toggle-row" style="margin-bottom:16px">
+                    <span>Usar Testnet</span>
+                    <label class="switch"><input type="checkbox" id="apiTestnetToggle" checked><span class="slider"></span></label>
+                </div>
+                <button class="btn btn-primary btn-full" id="apiSaveBtn">Guardar y reconectar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js" onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js';document.head.appendChild(s)"></script>
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+services:
+  bot:
+    build: ./backend
+    container_name: trading-bot
+    ports:
+      - "5000:5000"
+    env_file: ./backend/.env
+    volumes:
+      - ./backend/data:/app/data
+    restart: unless-stopped
