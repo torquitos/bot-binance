@@ -43,6 +43,6 @@ class WSManager:
         self.twm.start_kline_socket(callback=callback, symbol=symbol, interval=interval)
 
     def update_symbol(self, symbol, callback):
-        self.twm.stop()
-        self.twm.start()
+        self.stop()
+        self.start()
         self.subscribe_ticker(symbol, callback)
