@@ -1,5 +1,6 @@
 import json
 import os
+import secrets
 import time
 from pathlib import Path
 
@@ -19,9 +20,10 @@ FRONTEND_DIR = BASE_DIR.parent / "frontend"
 load_dotenv(BASE_DIR / ".env")
 
 app = Flask(__name__, static_folder=str(FRONTEND_DIR), static_url_path="")
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret")
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", secrets.token_hex(32))
 
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+allowed_origins = os.getenv("CORS_ORIGINS", "http://localhost:5000,http://127.0.0.1:5000")
+CORS(app, resources={r"/api/*": {"origins": [o.strip() for o in allowed_origins.split(",") if o.strip()]}})
 
 limiter = Limiter(
     app=app,
@@ -227,6 +229,7 @@ def api_backtest():
             strategy_params=strategy_params,
             quote_amount=float(quote_amount),
             kline_limit=int(kline_limit),
+            emergency_stop_pct=float(payload.get("emergency_stop_pct", 5)),
         )
         return ok({"backtest": result})
     except Exception as exc:

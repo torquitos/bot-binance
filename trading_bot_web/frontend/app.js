@@ -27,9 +27,38 @@ async function api(path, opts = {}) {
 function showToast(msg, ok = true) {
   const t = $("#toast");
   $("#toastIcon").textContent = ok ? "✓" : "✗";
-  $("#toastMsg").textContent = msg.replace(/[✅❌🤖⏹🧹🔬🔑]/g, "").trim();
+  const iconless = msg.replace(/[✅❌🤖⏹🧹🔬🔑]/g, "").trim();
+  const cleaned = iconless.replace(/^Error:\s*/i, "");
+  $("#toastMsg").textContent = cleaned;
+  t.classList.remove("show");
+  void t.offsetWidth;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 3000);
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+async function runWithLoading(btnId, path, msg) {
+  const btn = $(btnId);
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "⏳";
+  try {
+    const payload = path.includes("auto/start") ? getFormPayload() : undefined;
+    const d = await api(path, { method: "POST", body: payload ? JSON.stringify(payload) : undefined });
+    renderState(d.state);
+    showToast(msg || d.message, true);
+  } catch (e) {
+    showToast("Error: " + e.message, false);
+  } finally {
+    btn.textContent = orig;
+    if (store.state) {
+      const credsOk = store.state.credentials_ready;
+      $("#buyBtn").disabled = !credsOk || store.state.position_open;
+      $("#sellBtn").disabled = !credsOk || !store.state.position_open;
+      $("#startAutoBtn").disabled = !credsOk || store.state.bot_active;
+      $("#stopAutoBtn").disabled = !store.state.bot_active;
+    }
+  }
 }
 
 // ── Tab switching ──
@@ -346,9 +375,27 @@ function renderState(state) {
     if (state.dca_amount != null) $("#dcaAmount").value = state.dca_amount;
     if (state.dca_interval_minutes != null) $("#dcaInterval").value = state.dca_interval_minutes;
   }
-  // Save form values from stepper when user changes them (so SSE doesn't eat them)
-  if ($("#strategySelect").value) storeFormValues.strategy = $("#strategySelect").value;
-  if ($("#strategyInterval").value) storeFormValues.interval = $("#strategyInterval").value;
+  // Restore user-changed form values that SSE would otherwise overwrite
+  if (storeFormValues.strategy && $("#strategySelect").value !== storeFormValues.strategy) {
+    $("#strategySelect").value = storeFormValues.strategy;
+  }
+  if (storeFormValues.interval && $("#strategyInterval").value !== storeFormValues.interval) {
+    $("#strategyInterval").value = storeFormValues.interval;
+  }
+  if (storeFormValues.symbol && storeFormValues.symbol !== state.symbol) {
+    $$(".pair-btn").forEach((b) => b.classList.toggle("selected", b.dataset.symbol === storeFormValues.symbol));
+  }
+  if (!storeFormValues.symbol) {
+    $$(".pair-btn").forEach((b) => b.classList.toggle("selected", b.dataset.symbol === state.symbol));
+  }
+}
+
+// Track user form changes to protect from SSE overwrites
+document.addEventListener("change", (e) => {
+  if (e.target.id === "strategySelect") storeFormValues.strategy = e.target.value;
+  if (e.target.id === "strategyInterval") storeFormValues.interval = e.target.value;
+  if (e.target.closest(".pair-btn")) storeFormValues.symbol = e.target.dataset?.symbol;
+}, true);
 }
 
 // ── Portfolio ──
@@ -502,12 +549,13 @@ async function loadMarketOptions() {
     $$("#chartInterval, #btInterval").forEach((el) => { el.innerHTML = io; el.value = "15m"; });
     // Populate pair grid
     const grid = $("#pairGrid");
-    grid.innerHTML = d.symbols.slice(0, 8).map((s) =>
+    grid.innerHTML = d.symbols.slice(0, 20).map((s) =>
       `<div class="pair-btn ${s === "BTCUSDT" ? "selected" : ""}" data-symbol="${s}">${s.startsWith("BTC") ? "₿" : s.startsWith("ETH") ? "Ξ" : s.startsWith("SOL") ? "◎" : "◆"} ${s.replace("USDT", "/USDT")}</div>`
     ).join("");
     if (!store.pairListenersAdded) {
       $$(".pair-btn").forEach((btn) => btn.addEventListener("click", () => {
         store.userChangedPair = true;
+        storeFormValues.symbol = btn.dataset.symbol;
         $$(".pair-btn").forEach((b) => b.classList.remove("selected"));
         btn.classList.add("selected");
         const sym = btn.dataset.symbol;
@@ -557,17 +605,17 @@ async function runAction(path, msg) {
   } catch (e) { showToast("Error: " + e.message, false); }
 }
 
-$("#buyBtn").addEventListener("click", () => runAction("/api/manual/buy", "Compra ejecutada"));
-$("#sellBtn").addEventListener("click", () => runAction("/api/manual/sell", "Venta ejecutada"));
-$("#startAutoBtn").addEventListener("click", () => runAction("/api/auto/start", "Bot iniciado"));
-$("#stopAutoBtn").addEventListener("click", () => runAction("/api/auto/stop", "Bot detenido"));
+$("#buyBtn").addEventListener("click", () => runWithLoading("#buyBtn", "/api/manual/buy", "Compra ejecutada"));
+$("#sellBtn").addEventListener("click", () => runWithLoading("#sellBtn", "/api/manual/sell", "Venta ejecutada"));
+$("#startAutoBtn").addEventListener("click", () => runWithLoading("#startAutoBtn", "/api/auto/start", "Bot iniciado"));
+$("#stopAutoBtn").addEventListener("click", () => runWithLoading("#stopAutoBtn", "/api/auto/stop", "Bot detenido"));
 $$("#clearLogsBtn, #clearLogsBtn2").forEach((el) => el.addEventListener("click", () => runAction("/api/logs/clear", "Logs limpiados")));
 // Mode pill toggle
 $("#modePill").addEventListener("click", () => {
   if (store.state?.bot_active) {
-    runAction("/api/auto/stop", "Bot detenido");
+    runWithLoading("#modePill", "/api/auto/stop", "Bot detenido");
   } else {
-    runAction("/api/auto/start", "Bot iniciado");
+    runWithLoading("#modePill", "/api/auto/start", "Bot iniciado");
   }
 });
 
@@ -579,6 +627,7 @@ $("#trailingStopPct").addEventListener("input", () => {
 // ── Chart controls ──
 $("#chartSymbol").addEventListener("change", () => {
   store.userChangedPair = true;
+  storeFormValues.symbol = $("#chartSymbol").value;
   refreshChart($("#chartSymbol").value, $("#chartInterval").value);
   // Sync pair grid
   $$(".pair-btn").forEach((b) => b.classList.toggle("selected", b.dataset.symbol === $("#chartSymbol").value));
@@ -651,10 +700,13 @@ $("#backtestForm").addEventListener("submit", async (e) => {
 // ── SSE ──
 let sseSource;
 let sseRetry = 0;
+let ssePaused = false;
+
 function startSSE() {
   if (sseSource) sseSource.close();
   sseSource = new EventSource(`${API_BASE_URL}/api/stream`);
   sseSource.onmessage = (e) => {
+    if (ssePaused) return;
     sseRetry = 0;
     try { const d = JSON.parse(e.data); if (d && d.last_price != null) renderState(d); } catch (_) { }
   };
@@ -662,9 +714,17 @@ function startSSE() {
     sseSource.close();
     sseRetry++;
     const delay = Math.min(1000 * Math.pow(2, sseRetry), 30000);
-    setTimeout(startSSE, delay);
+    if (!ssePaused) setTimeout(startSSE, delay);
   };
 }
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    ssePaused = true;
+  } else {
+    ssePaused = false;
+  }
+});
 
 // ── Boot ──
 async function bootstrap() {

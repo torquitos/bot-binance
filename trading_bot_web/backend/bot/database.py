@@ -191,7 +191,7 @@ class Database:
         pass  # connections are short-lived via 'with self._conn()'
 
     def run_backtest(self, symbol, interval, klines, quote_amount,
-                     evaluate_fn):
+                     evaluate_fn, emergency_stop_pct=5.0):
         results = {
             "symbol": symbol,
             "interval": interval,
@@ -271,8 +271,8 @@ class Database:
                 if signal and signal.get("action") == "sell":
                     price = closes_up_to[-1]
                     close_trade(price, signal.get("reason", "signal"))
-                elif candle["low"] <= position_entry * 0.95:
-                    close_trade(position_entry * 0.95, "stop-loss-emergencia")
+                elif candle["low"] <= position_entry * (1 - emergency_stop_pct / 100):
+                    close_trade(position_entry * (1 - emergency_stop_pct / 100), "stop-loss-emergencia")
 
         if position_open and klines:
             close_trade(klines[-1]["close"], "cierre")

@@ -375,7 +375,29 @@ class TradingBotService:
             self.state["credentials_ready"] = bool(api_key and api_secret)
             self.log("info", "Credenciales actualizadas" + (" (Testnet)" if self.use_testnet else ""))
 
+    def _validate_strategy_params(self, strategy, params):
+        defs = STRATEGY_DEFS.get(strategy, {}).get("params", {})
+        validated = {}
+        for k, v in defs.items():
+            raw = params.get(k, v.get("default"))
+            if raw is None and v.get("required"):
+                return None, f"El parametro '{k}' es obligatorio para {strategy}"
+            if raw is not None:
+                try:
+                    if v["type"] == "int":
+                        raw = int(float(raw))
+                    elif v["type"] == "float":
+                        raw = float(raw)
+                except (ValueError, TypeError):
+                    return None, f"Parametro '{k}' debe ser {v['type']}, recibido {type(raw).__name__}"
+                if v["type"] == "int" and raw <= 0:
+                    return None, f"Parametro '{k}' debe ser > 0"
+            validated[k] = raw
+        return validated, None
+
     def update_config(self, payload):
+        if self.state.get("bot_active"):
+            raise RuntimeError("Detene el bot automatico antes de cambiar la configuracion.")
         with self.lock:
             symbol = str(payload.get("symbol", self.state["symbol"])).upper().replace("/", "")
             quote_amount = self._to_decimal(payload.get("quote_amount"), self.state["quote_amount"])
@@ -385,6 +407,12 @@ class TradingBotService:
             stop_loss_price = self._to_decimal(payload.get("stop_loss_price"))
             chart_interval = str(payload.get("chart_interval", self.state["chart_interval"]))
             strategy = str(payload.get("strategy", self.state.get("strategy", "threshold")))
+
+            if strategy in STRATEGY_DEFS:
+                new_params = dict(payload.get("strategy_params", {}))
+                validated, err = self._validate_strategy_params(strategy, new_params)
+                if err:
+                    raise RuntimeError(err)
 
             self.state["symbol"] = symbol
             self.state["quote_amount"] = quote_amount
@@ -634,6 +662,8 @@ class TradingBotService:
 
     def stop_auto(self):
         self.stop_event.set()
+        if self.auto_thread and self.auto_thread.is_alive():
+            self.auto_thread.join(timeout=5)
         with self.lock:
             self.state["bot_active"] = False
             self.state["mode"] = "manual"
@@ -812,7 +842,7 @@ class TradingBotService:
         return self.db.get_sessions()
 
     def run_backtest(self, symbol, interval, strategy_name, strategy_params,
-                     quote_amount=100, kline_limit=500):
+                     quote_amount=100, kline_limit=500, emergency_stop_pct=5.0):
         klines = self.get_klines_raw(symbol, interval, limit=kline_limit)
         if not klines:
             raise RuntimeError("No se pudieron obtener datos de mercado.")
@@ -834,6 +864,7 @@ class TradingBotService:
             klines=klines,
             quote_amount=float(quote_amount),
             evaluate_fn=evaluate_fn,
+            emergency_stop_pct=float(emergency_stop_pct),
         )
 
     def snapshot(self):
@@ -866,6 +897,10 @@ class TradingBotService:
                 quote_asset = info.get("quoteAsset")
             except Exception:
                 pass
+            if not base_asset:
+                base_asset = self.state["symbol"][:-4] if len(self.state["symbol"]) > 4 else "BTC"
+            if not quote_asset:
+                quote_asset = self.state["symbol"][-4:] if len(self.state["symbol"]) > 4 else "USDT"
 
             strat_label = STRATEGY_DEFS.get(self.state["strategy"], {}).get("label", self.state["strategy"])
 
